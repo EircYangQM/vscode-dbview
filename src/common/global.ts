@@ -16,17 +16,17 @@ export class Global {
     }
 
     public static updateStatusBarItems(activeConnection: IConnection) {
-        if (Global.mysqlStatusBarItem) {
-            Global.mysqlStatusBarItem.text = Global.getStatusBarItemText(activeConnection);
+        if (Global.dbStatusBarItem) {
+            Global.dbStatusBarItem.text = Global.getStatusBarItemText(activeConnection);
         } else {
-            Global.mysqlStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
-            Global.mysqlStatusBarItem.text = Global.getStatusBarItemText(activeConnection);
-            Global.mysqlStatusBarItem.show();
+            Global.dbStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+            Global.dbStatusBarItem.text = Global.getStatusBarItemText(activeConnection);
+            Global.dbStatusBarItem.show();
         }
     }
 
     private static _activeConnection: IConnection;
-    private static mysqlStatusBarItem: vscode.StatusBarItem;
+    private static dbStatusBarItem: vscode.StatusBarItem;
 
     private static getStatusBarItemText(activeConnection: IConnection): string {
         return `$(server)`;// ${activeConnection.host}` + (activeConnection.database ? ` $(database) ${activeConnection.database}` : "");

@@ -6,20 +6,115 @@
 	"engines": {
 		"vscode": "^1.43.0"
 	},
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:EircYangQM/vscode-dbview.git"
+	},
 	"categories": [
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:extension.dbviewer.new"
+		"onCommand:databases.addConnection"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
+		"views": {
+			"explorer": [
+				{
+					"id": "databases",
+					"name": "DataBases"
+				}
+			]
+		},
 		"commands": [
 			{
-				"command": "extension.dbviewer.new",
-				"title": "DBViwer"
+				"command": "databases.refresh",
+				"title": "Refresh",
+				"category": "DataBases"
+			},
+			{
+				"command": "databases.addConnection",
+				"title": "Add Connection",
+				"icon": {
+					"light": "resources/light/add.svg",
+					"dark": "resources/dark/add.svg"
+				},
+				"category": "DataBases"
+			},
+			{
+				"command": "databases.deleteConnection",
+				"title": "Delete Connection",
+				"category": "DataBases"
+			},
+			{
+				"command": "databases.runQuery",
+				"title": "Run DataBase Query",
+				"category": "DataBases"
+			},
+			{
+				"command": "databases.newQuery",
+				"title": "New Query",
+				"category": "DataBases"
+			},
+			{
+				"command": "databases.selectTop1000",
+				"title": "Select Top 1000",
+				"category": "DataBases"
 			}
-		]
+		],
+		"menus": {
+			"editor/context": [
+				{
+					"command": "databases.runQuery",
+					"when": "editorLangId == sql",
+					"group": "navigation"
+				}
+			],
+			"view/title": [
+				{
+					"command": "databases.addConnection",
+					"when": "view == databases",
+					"group": "navigation@1"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "databases.newQuery",
+					"when": "view == databases && viewItem == connection",
+					"group": "databases@1"
+				},
+				{
+					"command": "databases.refresh",
+					"when": "view == databases && viewItem == connection",
+					"group": "databases@1"
+				},
+				{
+					"command": "databases.deleteConnection",
+					"when": "view == databases && viewItem == connection",
+					"group": "databases@2"
+				},
+				{
+					"command": "databases.newQuery",
+					"when": "view == databases && viewItem == database",
+					"group": "databases@0"
+				},
+				{
+					"command": "databases.refresh",
+					"when": "view == databases && viewItem == database",
+					"group": "databases@1"
+				},
+				{
+					"command": "databases.selectTop1000",
+					"when": "view == databases && viewItem == table",
+					"group": "databases@0"
+				},
+				{
+					"command": "databases.refresh",
+					"when": "view == databases && viewItem == table",
+					"group": "databases@1"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -38,11 +133,19 @@
 		"@types/vscode": "^1.43.0",
 		"@typescript-eslint/eslint-plugin": "^2.18.0",
 		"@typescript-eslint/parser": "^2.18.0",
+		"electron-rebuild": "^1.11.0",
 		"eslint": "^6.8.0",
 		"glob": "^7.1.6",
 		"mocha": "^7.0.1",
 		"typescript": "^3.7.5",
 		"uuid": "^7.0.2",
 		"vscode-test": "^1.3.0"
+	},
+	"dependencies": {
+		"find-java-home": "^1.1.0",
+		"java": "^0.12.1",
+		"jdbc": "^0.7.0",
+		"node-abi": "^2.18.0",
+		"winston": "^3.2.1"
 	}
 }

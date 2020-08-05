@@ -2,15 +2,14 @@ import * as fs from "fs";
 // import * as mysql from "mysql";
 import * as path from "path";
 import * as vscode from "vscode";
-// import { AppInsightsClient } from "../common/appInsightsClient";
 import { Constants } from "../common/constants";
-// import { Global } from "../common/global";
-// import { Utility } from "../common/utility";
 import { DbTreeDataProvider } from "../provider";
 import { IConnection } from "./connection";
-// import { DatabaseNode } from "./databaseNode";
-// import { InfoNode } from "./infoNode";
 import { INode } from "./node";
+import { CatalogNode } from "./catalog-node";
+import { InfoNode} from "./info-node";
+import { JDBCHelper } from "../common/jdbc-helper";
+import { TableNode } from "./table-node";
 
 export class ConnectionNode implements INode {
     // constructor(private readonly id: string, private readonly host: string, private readonly user: string,
@@ -18,12 +17,11 @@ export class ConnectionNode implements INode {
     //             private readonly certPath: string) {
     // }
 
-    constructor(private readonly id: string, private readonly connectionStrng: string) {
-}
-
+    constructor(private readonly id: string, private readonly name: string, private readonly connectionString: string) {}
+    
     public getTreeItem(): vscode.TreeItem {
         return {
-            label: this.connectionStrng,
+            label: this.name,
             collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
             contextValue: "connection",
             iconPath: path.join(__filename, "..", "..", "..", "resources", "server.png"),
@@ -31,24 +29,41 @@ export class ConnectionNode implements INode {
     }
 
     public async getChildren(): Promise<INode[]> {
-      return new Promise<any[]>(()=>{});
-        // const connection = Utility.createConnection({
-        //     host: this.host,
-        //     user: this.user,
-        //     password: this.password,
-        //     port: this.port,
-        //     certPath: this.certPath,
-        // });
+        const connection = JDBCHelper.createConnection({
+            name: this.name,
+            connectionString: this.connectionString
+        });
 
-        // return Utility.queryPromise<any[]>(connection, "SHOW DATABASES")
-        //     .then((databases) => {
-        //         return databases.map<DatabaseNode>((database) => {
-        //             return new DatabaseNode(this.host, this.user, this.password, this.port, database.Database, this.certPath);
+        return JDBCHelper.getCatalogs<any[]>(connection)
+            .then((resultSet) => {
+                if (resultSet.length === 0) {
+                    return [new CatalogNode("MOCK", this.connectionString, "")];
+                } else {
+                    return resultSet.map<CatalogNode>((result) => {
+                        return new CatalogNode(result["TABLE_CAT"], this.connectionString, result["TABLE_CAT"]);
+                    });
+                }
+            })
+            .catch((err) => {
+                return [new InfoNode(err)];
+            })
+            .finally(() => {
+                connection.release(connection, () => {});
+            });
+        // let results = await JDBCHelper.getTables<any[]>(connection,"", "")
+        //     .then((resultSet) => {
+        //         return resultSet.map<TableNode>((result) => {
+        //             console.log(`TABLE: ${ result["TABLE_NAME"]}`);
+        //             return new TableNode(this.name, this.connectionString,"", "", result["TABLE_NAME"]);
         //         });
         //     })
         //     .catch((err) => {
         //         return [new InfoNode(err)];
+        //     })
+        //     .finally(() => {
+        //         connection.release(connection, () => {});
         //     });
+        // return results;
     }
 
     public async newQuery() {
@@ -66,12 +81,12 @@ export class ConnectionNode implements INode {
 
     public async deleteConnection(context: vscode.ExtensionContext, dbTreeDataProvider: DbTreeDataProvider) {
         // AppInsightsClient.sendEvent("deleteConnection");
-        // const connections = context.globalState.get<{ [key: string]: IConnection }>(Constants.GlobalStateMySQLConectionsKey);
-        // delete connections[this.id];
-        // await context.globalState.update(Constants.GlobalStateMySQLConectionsKey, connections);
-
-        // await Global.keytar.deletePassword(Constants.ExtensionId, this.id);
-
-        // mysqlTreeDataProvider.refresh();
+        const connections = context.globalState.get<{ [key: string]: IConnection }>(Constants.GlobalStateDbConectionsKey);
+        if (connections !== undefined && [this.id] !== null) {
+            delete connections[this.id];
+            await context.globalState.update(Constants.GlobalStateDbConectionsKey, connections);
+            // await Global.keytar.deletePassword(Constants.ExtensionId, this.id);
+            dbTreeDataProvider.refresh();
+        }
     }
 }
